@@ -11,9 +11,10 @@ class Ship
 
   def initialize(type)
     @type = type
+    @hit_count = 0
   end
 
-  attr_reader :type
+  attr_reader :type, :hit_count
 
   def initial
     type.to_s[0].upcase
@@ -21,5 +22,13 @@ class Ship
 
   def size
     TYPES[type]
+  end
+
+  def afloat?
+    hit_count < size
+  end
+
+  def hit!
+    @hit_count += 1
   end
 end

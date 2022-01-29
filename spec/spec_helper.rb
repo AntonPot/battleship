@@ -18,6 +18,7 @@ require "awesome_print"
 require "./lib/board"
 require "./lib/cell"
 require "./lib/ship"
+require "./lib/player"
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate

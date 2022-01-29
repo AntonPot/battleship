@@ -1,69 +1,74 @@
+require "./lib/player.rb"
 require "./lib/board.rb"
-require "./lib/ship.rb"
 require "pry-byebug"
 
 class Game
-  DIRECTIONS = %i[down left].freeze
-
   def initialize
-    @board = Board.new
-    @ships = build_ships
+    @player1 = Player.new
+    @player2 = Player.new
   end
 
   def run
     ship_placement
+    battle
   end
 
   private
 
-  attr_reader :board, :ships
+  attr_reader :player1, :player2
 
   def ship_placement
-    board.display
+    player1.display_boards
+    puts "\nPlace your all your ships:"
+    puts "\nExample: 'D, B4, down' for Destroyer to be placed on B4 and C4"
 
-    while ships.any?
-      puts "\nPlace your ships:"
-      puts ships.map(&:type).map(&:capitalize).join(", ")
-      puts "\nExample: 'D, B4, down' for Destroyer to be placed on B4 and C4"
+    place_ship until player1.list_available_ships.empty?
 
-      input = gets.chomp
-      ship_initial, start_location, direction = parse_placement_input(input)
+    puts "\nSuccessful placement"
+    player2.automatic_ship_placement
+  end
 
-      next puts("\nIllegal direction") unless DIRECTIONS.include?(direction)
+  def place_ship
+    puts "\nAvailable ships:"
+    puts player1.list_available_ships
 
-      ship = ships.find { |s| s.initial == ship_initial.strip.upcase }
-      next puts("\nNo such ship") unless ship
+    input = gets.chomp
 
-      board_ships = board.add_ship(ship: ship, start_location: start_location.strip.upcase, direction: direction)
-      next puts("\nIncorrect placement") unless board_ships
+    return player1.automatic_ship_placement if input == "auto"
 
-      ships.delete_if { |s| board_ships.include?(s) }
-      board.display
-    end
+    player1.place_ship(input: input)
+    player1.display_boards
+  rescue InputError => e
+    puts e.message
   end
 
   def battle
-    loop do
-      board.display
-      puts "Enter cell location (e.g. A5)"
+    player2.display_boards # TODO: don't forget to remove
+    player1.display_boards
+    puts "\nFire upon opponent's battlefield (e.g. A5)\n"
 
-      input = gets.chomp.split("")
-      column = input[0].upcase
-      row = input[1..-1].join("")
+    turn while player1.alive? && player2.alive?
 
-      puts board.change_cell_value(column: column, row: row, to: "X")
-    end
+    puts "GAME OVER!"
+    puts player1.alive? ? "YOU WON! :)" : "You lost :("
   end
 
-  def build_ships
-    Ship::TYPES.keys.map { |type| Ship.new(type) }
-  end
+  def turn
+    input = gets.chomp
 
-  def parse_placement_input(input)
-    input.split(",").map.with_index do |i, index|
-      index == 2 ? i.strip.downcase.to_sym : i.strip.upcase
-    end
+    is_hit = player2.hit?(on: input)
+    player1.log_hits(on: input, is_hit: is_hit)
+
+    counter_attack = Board.random_cell
+    is_hit = player1.hit?(on: counter_attack)
+    player2.log_hits(on: counter_attack, is_hit: is_hit)
+
+    player1.display_boards
+  rescue InputError => e
+    puts e.message
   end
 end
+
+InputError = Class.new(StandardError)
 
 Game.new.run

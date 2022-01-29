@@ -40,17 +40,17 @@ RSpec.describe Board do
   #   end
   # end
 
-  describe "#add_ship" do
+  describe "#place_ship" do
     let(:ship) { Ship.new(:cruiser) }
     let(:board_instance) { Board.new }
 
-    subject { board_instance.add_ship(ship: ship, start_location: "A2", direction: :down) }
+    subject { board_instance.place_ship(ship: ship, start_location: "A2", direction: :down) }
 
     it "adds a Ship to the Board" do
-      expect { subject }.to change { board_instance.ships.count }.by(1)
+      expect { subject }.to change { board_instance.placed_ships.count }.by(1)
     end
 
-    it "places correct ship on the board" do
+    it "places correct Ship on the Board" do
       subject
       last_ship_cell = board_instance.find_cell(row: "4", column: "A")
       next_cell = board_instance.find_cell(row: "5", column: "A")
@@ -59,11 +59,11 @@ RSpec.describe Board do
       expect(next_cell.value).to eq("-")
     end
 
-    context "when ship collides another ship" do
+    context "when Ship collides another Ship" do
       let(:first_cell_for_second_ship) { board_instance.find_cell(row: "2", column: "A") }
 
       before do
-        board_instance.add_ship(ship: Ship.new(:battleship), start_location: "A3", direction: :left)
+        board_instance.place_ship(ship: Ship.new(:battleship), start_location: "A3", direction: :left)
       end
 
       it { is_expected.to be_nil }
@@ -72,9 +72,22 @@ RSpec.describe Board do
         expect(first_cell_for_second_ship.value).to eq("-")
       end
     end
+
+    context "when Ship goes out of bounds" do
+      pending
+    end
   end
 
   describe "#find_cell" do
     pending
+  end
+
+  describe "#get_cell_value" do
+    pending
+    context "when cell doesn't exist"
+  end
+
+  describe "#change_cell_value" do
+    
   end
 end
