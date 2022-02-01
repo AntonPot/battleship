@@ -1,5 +1,3 @@
-require "pry-byebug"
-
 class Ship
   TYPES = {
     destroyer: 2,

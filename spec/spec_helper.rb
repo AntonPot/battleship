@@ -19,6 +19,7 @@ require "./lib/board"
 require "./lib/cell"
 require "./lib/ship"
 require "./lib/player"
+require "./lib/game"
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate

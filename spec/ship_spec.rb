@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.fdescribe Ship do
+RSpec.describe Ship do
   subject { Ship.new(:destroyer) }
 
   it { is_expected.to respond_to :type, :hit_count, :initial, :size, :afloat?, :hit! }

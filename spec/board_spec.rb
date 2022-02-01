@@ -1,10 +1,12 @@
 require "spec_helper"
 
 RSpec.describe Board do
-  it { is_expected.to respond_to :board, :display, :change_cell_value }
+  let!(:board_instance) { Board.new }
 
-  describe "#board" do
-    subject { Board.new.board }
+  it { is_expected.to respond_to :matrix, :sunk_ships, :placed_ships, :sunk_ships }
+
+  describe "#matrix" do
+    subject { board_instance.matrix }
 
     it "returns 2D array" do
       expect(subject).to be_kind_of Array
@@ -23,35 +25,38 @@ RSpec.describe Board do
     end
   end
 
-  # describe "#change_cell_value" do
-  #   let(:cell) { subject.board[5][3] }
+  describe "#find_cell" do
+    subject { board_instance.find_cell(row: "3", column: "B") }
 
-  #   it "changes value of correct cell" do
-  #     expect do
-  #       subject.change_cell_value(column: "C", row: 5, to: "X")
-  #     end.to change(cell, :value).from("-").to("X")
-  #   end
+    it "returns expected Cell" do
+      expect(subject).to be board_instance.matrix[3][2]
+    end
 
-  #   context "when target is out of bounts" do
-  #     it "responds with warning" do
-  #       expect(subject.change_cell_value(column: "C", row: 12, to: "X")).to eq "Warning!"
-  #       expect(subject.change_cell_value(column: "X", row: 2, to: "X")).to eq "Warning!"
-  #     end
-  #   end
-  # end
+    context "when `column` is invalid" do
+      subject { board_instance.find_cell(row: "3", column: "Y") }
+
+      it { expect { subject }.to raise_error(InputError, "No such location") }
+    end
+
+    context "when `row` is invalid" do
+      subject { board_instance.find_cell(row: "11", column: "Y") }
+
+      it { expect { subject }.to raise_error(InputError, "No such location") }
+    end
+  end
 
   describe "#place_ship" do
     let(:ship) { Ship.new(:cruiser) }
-    let(:board_instance) { Board.new }
 
-    subject { board_instance.place_ship(ship: ship, start_location: "A2", direction: :down) }
+    subject { board_instance.place_ship(ship_initial: "C", row: "2", column: "A", direction: :down) }
 
     it "adds a Ship to the Board" do
-      expect { subject }.to change { board_instance.placed_ships.count }.by(1)
+      expect { subject }.to(change { board_instance.placed_ships.count }.by(1))
     end
 
     it "places correct Ship on the Board" do
       subject
+      # binding.pry
       last_ship_cell = board_instance.find_cell(row: "4", column: "A")
       next_cell = board_instance.find_cell(row: "5", column: "A")
 
@@ -63,31 +68,82 @@ RSpec.describe Board do
       let(:first_cell_for_second_ship) { board_instance.find_cell(row: "2", column: "A") }
 
       before do
-        board_instance.place_ship(ship: Ship.new(:battleship), start_location: "A3", direction: :left)
+        board_instance.place_ship(ship_initial: "B", row: "3", column: "A", direction: :left)
       end
 
       it { is_expected.to be_nil }
-
-      it "doesn't place the ship on board" do
-        expect(first_cell_for_second_ship.value).to eq("-")
-      end
+      it { expect { subject }.not_to(change { board_instance.placed_ships.count }) }
     end
 
     context "when Ship goes out of bounds" do
-      pending
+      subject { board_instance.place_ship(ship_initial: "C", row: "2", column: "J", direction: :left) }
+
+      it { is_expected.to be_nil }
+      it { expect { subject }.not_to(change { board_instance.placed_ships.count }) }
+    end
+
+    context "when `ship_initial` is wrong" do
+      subject { board_instance.place_ship(ship_initial: "X", row: "2", column: "J", direction: :left) }
+
+      it { expect { subject }.to raise_error(InputError, "No such ship") }
+    end
+
+    context "when `direction` is wrong" do
+      subject { board_instance.place_ship(ship_initial: "A", row: "2", column: "J", direction: :foobar) }
+
+      it { expect { subject }.to raise_error(InputError, "Illegal direction") }
     end
   end
 
-  describe "#find_cell" do
-    pending
+  describe "#fire" do
+    let!(:cell) { board_instance.find_cell(row: "2", column: "C") }
+
+    subject { board_instance.fire(row: "2", column: "C") }
+
+    it { expect { subject }.to change(cell, :value).from("-").to("O") }
+
+    context "when Ship is hit" do
+      let(:ship) { board_instance.placed_ships.first }
+
+      before { board_instance.place_ship(ship_initial: "D", row: "2", column: "C", direction: :left) }
+
+      it { expect { subject }.to change(cell, :value).from("D").to("X") }
+      it { expect { subject }.to change(ship, :hit_count).from(0).to(1) }
+
+      context "when Ship is sunk" do
+        before { board_instance.fire(row: "2", column: "D") }
+
+        it { expect { subject }.to(change { board_instance.placed_ships.count }.by(-1)) }
+        it { expect { subject }.to(change { board_instance.sunk_ships.count }.by(1)) }
+      end
+    end
   end
 
-  describe "#get_cell_value" do
-    pending
-    context "when cell doesn't exist"
+  describe "#all_ships_sunk?" do
+    subject { board_instance.all_ships_sunk? }
+
+    it { is_expected.to be true }
+
+    context "when ships are placed on board" do
+      before { board_instance.place_ship(ship_initial: "A", row: "3", column: "D", direction: :down) }
+
+      it { is_expected.to be false }
+    end
   end
 
-  describe "#change_cell_value" do
-    
+  describe "#hit" do
+    let(:cell) { board_instance.find_cell(row: "2", column: "C") }
+
+    subject { board_instance.hit(row: "2", column: "C") }
+
+    it { expect { subject }.to change(cell, :value).from("-").to("X") }
+  end
+
+  describe "#splash" do
+    let(:cell) { board_instance.find_cell(row: "2", column: "C") }
+
+    subject { board_instance.splash(row: "2", column: "C") }
+
+    it { expect { subject }.to change(cell, :value).from("-").to("O") }
   end
 end

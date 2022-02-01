@@ -1,8 +1,6 @@
 require "./lib/board"
 
 class Player
-  DIRECTIONS = %i[down left].freeze
-
   attr_reader :opponent_board, :player_board
 
   def initialize
@@ -24,28 +22,28 @@ class Player
 
   def place_ship(input:)
     ship_initial, start_location, direction = parse_placement_input(input)
-    row, column = parse_cell_location_input(start_location)
+    column, row = parse_cell_location_input(start_location)
 
-    raise InputError, "\nIllegal direction" unless DIRECTIONS.include?(direction)
+    # raise InputError, "\nIllegal direction" unless DIRECTIONS.include?(direction)
+    # binding.pry
 
-    ships = player_board.place_ship(ship_initial: ship_initial, row: row, column: column, direction: direction)
+    ships = player_board.try_to_place_ship(ship_initial: ship_initial, row: row, column: column, direction: direction)
     raise InputError, "Incorrect placement" unless ships
   end
 
-  def automatic_ship_placement
-    while player_board.new_ships.any?
-      ship = player_board.new_ships.sample
-      column, row = Board.random_cell.split("")
-      direction = DIRECTIONS.sample
+  # def automatic_ship_placement
+    # while player_board.new_ships.any?
+    #   ship = player_board.new_ships.sample
+    #   column, row = Board.random_location.split("")
+    #   direction = DIRECTIONS.sample
 
-      player_board.place_ship(ship_initial: ship.initial, row: row, column: column, direction: direction)
-    end
-  end
+    #   player_board.place_ship(ship_initial: ship.initial, row: row, column: column, direction: direction)
+    # end
+  # end
 
   def log_hits(on:, is_hit:)
     column, row = parse_cell_location_input(on)
-
-    opponent_board.change_cell_value(row: row, column: column, to: is_hit ? "X" : "O")
+    opponent_board.send(is_hit ? :hit : :splash, {row: row, column: column})
   end
 
   def hit?(on:)

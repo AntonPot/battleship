@@ -25,7 +25,7 @@ class Game
     place_ship until player1.list_available_ships.empty?
 
     puts "\nSuccessful placement"
-    player2.automatic_ship_placement
+    player2.player_board.automatic_ship_placement
   end
 
   def place_ship
@@ -34,7 +34,7 @@ class Game
 
     input = gets.chomp
 
-    return player1.automatic_ship_placement if input == "auto"
+    return player1.player_board.automatic_ship_placement if input == "auto"
 
     player1.place_ship(input: input)
     player1.display_boards
@@ -59,7 +59,7 @@ class Game
     is_hit = player2.hit?(on: input)
     player1.log_hits(on: input, is_hit: is_hit)
 
-    counter_attack = Board.random_cell
+    counter_attack = Board.random_location
     is_hit = player1.hit?(on: counter_attack)
     player2.log_hits(on: counter_attack, is_hit: is_hit)
 
@@ -70,5 +70,3 @@ class Game
 end
 
 InputError = Class.new(StandardError)
-
-Game.new.run
