@@ -13,7 +13,6 @@ class Board
 
     def call
       cells = collect_cells
-
       raise InputError, "Ship collision" unless all_cells_empty?(cells)
 
       cells

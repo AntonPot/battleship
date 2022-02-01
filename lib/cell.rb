@@ -1,11 +1,8 @@
-require "./lib/board"
-
 class Cell
   COLUMNS = %w[A B C D E F G H I J].unshift(nil).freeze
   EMPTY = "-".freeze
 
   attr_accessor :value
-  attr_reader :row, :column
 
   def self.column_index(column)
     COLUMNS.index(column)
@@ -22,6 +19,8 @@ class Cell
   end
 
   private
+
+  attr_reader :row, :column
 
   def set_value
     if row.zero? && column.zero?
